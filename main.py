@@ -1,7 +1,6 @@
 import requests
 import telebot
 from pydub import AudioSegment
-import io
 import openai
 
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
