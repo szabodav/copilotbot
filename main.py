@@ -9,10 +9,17 @@ bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 openai_key = os.getenv("OPENAI_API_KEY")
 
 # Initialize the bot
-bot = telebot.TeleBot('TELEGRAM_BOT_TOKEN')
+bot = telebot.TeleBot(bot_token)
 
-# OpenAI API key
-openai_key = 'OPENAI_API_KEY'
+# Create the Flask app
+app = Flask(__name__)
+
+# Define the route for the webhook
+@app.route('/telegram-webhook', methods=['POST'])
+def handle_webhook():
+    update = telebot.types.Update.de_json(request.get_json(force=True), bot)
+    bot.process_new_updates([update])
+    return 'OK'
 
 @bot.message_handler(content_types=['voice'])
 def handle_voice(message):
@@ -53,10 +60,7 @@ def handle_voice(message):
         bot.send_message(message.chat.id, f'Sorry, I was unable to transcribe the voice message. Error: {str(e)}')
         bot.send_message(message.chat.id, f'Whisper API response: {whisper_response}')
 
+
+# Set the webhook URL
 webhook_url = os.getenv('WEBAPP_URL') + '/telegram-webhook'
-
-bot.set_webhook(url=webhook_url)        
-        
-
-# Start the bot
-bot.polling()
+bot.remove_webhook()
