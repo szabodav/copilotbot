@@ -34,7 +34,7 @@ def handle_voice(message):
         with open('voice_message.ogg', 'wb') as f:
             for chunk in response.iter_content(1024):
                 f.write(chunk)
-        bot.send_message(message.chat.id, 'Another voice message? Ugh, alright, give me a second.')
+        bot.send_message(message.chat.id, "Here's what this mofo just said.")
     else:
         bot.send_message(message.chat.id, "I can't even deal with you now.")
 
