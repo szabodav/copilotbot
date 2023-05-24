@@ -3,6 +3,7 @@ import telebot
 from pydub import AudioSegment
 import openai
 import os
+from flask import Flask, request
 
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 openai_key = os.getenv("OPENAI_API_KEY")
