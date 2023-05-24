@@ -17,6 +17,7 @@ app = Flask(__name__)
 # Define the route for the webhook
 @app.route('/telegram-webhook', methods=['POST'])
 def handle_webhook():
+    print(request.get_json(force=True))
     update = telebot.types.Update.de_json(request.get_json(force=True), bot)
     bot.process_new_updates([update])
     return 'OK'
