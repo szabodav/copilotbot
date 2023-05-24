@@ -64,3 +64,8 @@ def handle_voice(message):
 # Set the webhook URL
 webhook_url = os.getenv('WEBAPP_URL') + '/telegram-webhook'
 bot.remove_webhook()
+bot.set_webhook(url=webhook_url)
+
+# Run the Flask app
+if __name__ == '__main__':
+    app.run()
