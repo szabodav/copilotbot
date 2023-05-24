@@ -1,5 +1,4 @@
 requests
 telebot
 pydub
-io
 openai
