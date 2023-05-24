@@ -51,12 +51,12 @@ def handle_voice(message):
     openai.api_key = openai_key
     audio_file = open("output.wav", 'rb')
     try:
-        whisper_response = openai.Audio.translate("whisper-1", audio_file)
+        whisper_response = openai.Audio.transcribe("whisper-1", audio_file)
         print(whisper_response)
         # Extract the transcription from the response
-        translation = whisper_response["text"]
+        transcription = whisper_response["text"]
         # Send the transcription to the group
-        bot.send_message(message.chat.id, translation)
+        bot.send_message(message.chat.id, transcription)
     except Exception as e:
         bot.send_message(message.chat.id, f'Sorry, I was unable to transcribe the voice message. Error: {str(e)}')
         bot.send_message(message.chat.id, f'Whisper API response: {whisper_response}')
