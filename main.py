@@ -51,6 +51,10 @@ def handle_voice(message):
         bot.send_message(message.chat.id, f'Sorry, I was unable to transcribe the voice message. Error: {str(e)}')
         bot.send_message(message.chat.id, f'Whisper API response: {whisper_response}')
 
+webhook_url = os.getenv('WEBAPP_URL') + '/telegram-webhook'
+
+bot.set_webhook(url=webhook_url)        
+        
 
 # Start the bot
 bot.polling()
