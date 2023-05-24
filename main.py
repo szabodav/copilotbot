@@ -2,6 +2,7 @@ import requests
 import telebot
 from pydub import AudioSegment
 import openai
+import os
 
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 openai_key = os.getenv("OPENAI_API_KEY")
