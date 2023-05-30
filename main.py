@@ -34,9 +34,8 @@ def handle_voice(message):
         with open('voice_message.ogg', 'wb') as f:
             for chunk in response.iter_content(1024):
                 f.write(chunk)
-        bot.send_message(message.chat.id, "Here's what this mofo just said.")
     else:
-        bot.send_message(message.chat.id, "I can't even deal with you now.")
+        bot.send_message(message.chat.id, "Hm, I'll stay out of this one.")
 
     # Load the audio data with pydub
     audio = AudioSegment.from_ogg('voice_message.ogg')
