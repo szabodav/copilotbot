@@ -46,11 +46,15 @@ def transcribe_chunk(chunk):
 
 @bot.message_handler(content_types=['voice'])
 def handle_voice(message):
-    logging.info(f"Received voice message: {message.voice}")
     # Get the voice message file
     file_info = bot.get_file(message.voice.file_id)
     file_url = f"https://api.telegram.org/file/bot{bot.token}/{file_info.file_path}"
-    logging.info(f"File URL: {file_url}")
+    file_size = message.voice.file_size
+
+    # Check if the file size is greater than 20MB
+    if file_size > 20 * 1024 * 1024:
+        logging.error(f"File size ({file_size} bytes) is greater than 20MB. Splitting file into chunks.")
+        raise Exception('File size too large')
 
     # Download the file
     response = requests.get(file_url, stream=True)
@@ -60,7 +64,6 @@ def handle_voice(message):
                 f.write(chunk)
     else:
         bot.send_message(message.chat.id, "Hm, I'll stay out of this one.")
-        logging.error(f"Failed to download file. Status code: {response.status_code}")
 
     # Load the audio data with pydub
     audio = AudioSegment.from_ogg('voice_message.ogg')
@@ -76,7 +79,7 @@ def handle_voice(message):
     audio_file = open("output.wav", 'rb')
     try:
         whisper_response = openai.Audio.transcribe("whisper-1", audio_file)
-        logging.info(f"Whisper response: {whisper_response}")
+        print(whisper_response)
         # Extract the transcription from the response
         transcription = whisper_response["text"]
         # Send the transcription to the group
@@ -91,6 +94,7 @@ def handle_voice(message):
                 bot.send_message(message.chat.id, text)
             except Exception as e:
                 bot.send_message(message.chat.id, f'Sorry, I was unable to transcribe a part of the voice message. Error: {str(e)}')
+
 
 # Set the webhook URL
 webhook_url = os.getenv('WEBAPP_URL') + '/telegram-webhook'
