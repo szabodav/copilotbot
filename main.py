@@ -3,10 +3,13 @@ import telebot
 from pydub import AudioSegment
 import openai
 import os
+import logging
 from flask import Flask, request
 
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 openai_key = os.getenv("OPENAI_API_KEY")
+
+logging.basicConfig(level=logging.INFO)
 
 # Initialize the bot
 bot = telebot.TeleBot(bot_token)
@@ -17,8 +20,9 @@ app = Flask(__name__)
 # Define the route for the webhook
 @app.route('/telegram-webhook', methods=['POST'])
 def handle_webhook():
-    print(request.get_json(force=True))
-    update = telebot.types.Update.de_json(request.get_json(force=True))
+    update_json = request.get_json(force=True)
+    logging.info(f"Received update: {update_json}")
+    update = telebot.types.Update.de_json(update_json)
     bot.process_new_updates([update])
     return 'OK'
 
@@ -42,9 +46,11 @@ def transcribe_chunk(chunk):
 
 @bot.message_handler(content_types=['voice'])
 def handle_voice(message):
+    logging.info(f"Received voice message: {message.voice}")
     # Get the voice message file
     file_info = bot.get_file(message.voice.file_id)
     file_url = f"https://api.telegram.org/file/bot{bot.token}/{file_info.file_path}"
+    logging.info(f"File URL: {file_url}")
 
     # Download the file
     response = requests.get(file_url, stream=True)
@@ -54,6 +60,7 @@ def handle_voice(message):
                 f.write(chunk)
     else:
         bot.send_message(message.chat.id, "Hm, I'll stay out of this one.")
+        logging.error(f"Failed to download file. Status code: {response.status_code}")
 
     # Load the audio data with pydub
     audio = AudioSegment.from_ogg('voice_message.ogg')
@@ -69,12 +76,13 @@ def handle_voice(message):
     audio_file = open("output.wav", 'rb')
     try:
         whisper_response = openai.Audio.transcribe("whisper-1", audio_file)
-        print(whisper_response)
+        logging.info(f"Whisper response: {whisper_response}")
         # Extract the transcription from the response
         transcription = whisper_response["text"]
         # Send the transcription to the group
         bot.send_message(message.chat.id, transcription)
     except Exception as e:
+        logging.error(f"Transcription failed: {str(e)}")
         # If transcription fails, split the audio into chunks and transcribe each chunk
         chunks = split_audio(audio, 23)
         for chunk in chunks:
