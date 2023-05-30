@@ -1,6 +1,6 @@
-# CopilotBot
+# TranscriptBot
 
-CopilotBot is an exploratory Telegram bot for Promptmaster Copilot. It's designed to interact with users on Telegram and provide responses using the OpenAI GPT-3 model.
+TranscriptBot is an exploratory Telegram bot for Promptmaster Copilot. It's designed to interact with users on Telegram and provide responses using the OpenAI GPT-3 model.
 
 ## Getting Started
 
