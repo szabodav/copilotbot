@@ -22,6 +22,26 @@ def handle_webhook():
     bot.process_new_updates([update])
     return 'OK'
 
+# Split audio file into chunks
+def split_audio(audio, max_duration_seconds):
+    audio_length_ms = len(audio)
+    max_duration_ms = max_duration_seconds * 1000  # convert to ms
+
+    chunks = []
+
+    for i in range(0, audio_length_ms, max_duration_ms):
+        chunk = audio[i:i + max_duration_ms]
+        chunks.append(chunk)
+
+    return chunks
+
+# Transcribe a chunk
+def transcribe_chunk(chunk):
+    chunk.export("temp_chunk.wav", format="wav")
+    with open("temp_chunk.wav", "rb") as audio_file:
+        transcript = openai.Audio.transcribe("whisper-1", audio_file)
+        return transcript["text"]
+
 @bot.message_handler(content_types=['voice'])
 def handle_voice(message):
     # Get the voice message file
@@ -57,9 +77,14 @@ def handle_voice(message):
         # Send the transcription to the group
         bot.send_message(message.chat.id, transcription)
     except Exception as e:
-        bot.send_message(message.chat.id, f'Sorry, I was unable to transcribe the voice message. Error: {str(e)}')
-        bot.send_message(message.chat.id, f'Whisper API response: {whisper_response}')
-
+        # If transcription fails, split the audio into chunks and transcribe each chunk
+        chunks = split_audio(audio, 23)
+        for chunk in chunks:
+            try:
+                text = transcribe_chunk(chunk)
+                bot.send_message(message.chat.id, text)
+            except Exception as e:
+                bot.send_message(message.chat.id, f'Sorry, I was unable to transcribe a part of the voice message. Error: {str(e)}')
 
 # Set the webhook URL
 webhook_url = os.getenv('WEBAPP_URL') + '/telegram-webhook'
