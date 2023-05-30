@@ -63,9 +63,14 @@ def handle_voice(message):
         # Download the file
         response = requests.get(file_url, stream=True)
         if response.status_code == 200:
-            with open('voice_message.ogg', 'wb') as f:
+            with open('voice_message.m4a', 'wb') as f:
                 for chunk in response.iter_content(1024):
                     f.write(chunk)
+
+            # Convert the m4a file to wav
+            audio = AudioSegment.from_file('voice_message.m4a')
+            audio.export("voice_message.wav", format="wav")
+            
         else:
             bot.send_message(message.chat.id, "Hm, I was unable to download the voice message.")
             return
