@@ -22,17 +22,15 @@ def handle_webhook():
     bot.process_new_updates([update])
     return 'OK'
 
-# Split audio file into chunks
-def split_audio(audio, max_duration_seconds):
+# Split audio into chunks with 5 second overlap
+def split_audio(audio, max_duration_seconds, overlap_seconds=5):
     audio_length_ms = len(audio)
     max_duration_ms = max_duration_seconds * 1000  # convert to ms
-
+    overlap_ms = overlap_seconds * 1000  # convert to ms
     chunks = []
-
-    for i in range(0, audio_length_ms, max_duration_ms):
+    for i in range(0, audio_length_ms, max_duration_ms - overlap_ms):
         chunk = audio[i:i + max_duration_ms]
         chunks.append(chunk)
-
     return chunks
 
 # Transcribe a chunk
