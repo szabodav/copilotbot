@@ -76,7 +76,7 @@ def handle_voice(message):
             return
 
         # Load the audio data with pydub
-        audio = AudioSegment.from_ogg('voice_message.ogg')
+        audio = AudioSegment.from_ogg('voice_message.wav')
 
         # Convert the audio to WAV format
         audio = audio.set_frame_rate(16000)  # Set the frame rate to 16kHz
