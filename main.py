@@ -46,54 +46,61 @@ def transcribe_chunk(chunk):
 
 @bot.message_handler(content_types=['voice'])
 def handle_voice(message):
-    # Get the voice message file
-    file_info = bot.get_file(message.voice.file_id)
-    file_url = f"https://api.telegram.org/file/bot{bot.token}/{file_info.file_path}"
-    file_size = message.voice.file_size
-
-    # Check if the file size is greater than 20MB
-    if file_size > 20 * 1024 * 1024:
-        logging.error(f"File size ({file_size} bytes) is greater than 20MB. Splitting file into chunks.")
-        raise Exception('File size too large')
-
-    # Download the file
-    response = requests.get(file_url, stream=True)
-    if response.status_code == 200:
-        with open('voice_message.ogg', 'wb') as f:
-            for chunk in response.iter_content(1024):
-                f.write(chunk)
-    else:
-        bot.send_message(message.chat.id, "Hm, I'll stay out of this one.")
-
-    # Load the audio data with pydub
-    audio = AudioSegment.from_ogg('voice_message.ogg')
-
-    # Convert the audio to WAV format
-    audio = audio.set_frame_rate(16000)  # Set the frame rate to 16kHz
-    audio = audio.set_channels(1)  # Set the number of channels to 1 (mono)
-    audio = audio.set_sample_width(2)  # Set the sample width to 2 bytes (16 bits)
-    audio.export("output.wav", format="wav")
-
-    # Send the audio file to Whisper API
-    openai.api_key = openai_key
-    audio_file = open("output.wav", 'rb')
     try:
-        whisper_response = openai.Audio.transcribe("whisper-1", audio_file)
-        print(whisper_response)
-        # Extract the transcription from the response
-        transcription = whisper_response["text"]
-        # Send the transcription to the group
-        bot.send_message(message.chat.id, transcription)
+        # Log the start of voice message processing
+        logging.info("Processing voice message...")
+
+        # Get the voice message file
+        file_info = bot.get_file(message.voice.file_id)
+        logging.info(f"Received file info: {file_info}")
+
+        file_url = f"https://api.telegram.org/file/bot{bot.token}/{file_info.file_path}"
+
+        # Check if file size is more than 20 MB
+        if message.voice.file_size > 20 * 1024 * 1024:
+            raise ValueError("The file size is too large for transcription.")
+
+        # Download the file
+        response = requests.get(file_url, stream=True)
+        if response.status_code == 200:
+            with open('voice_message.ogg', 'wb') as f:
+                for chunk in response.iter_content(1024):
+                    f.write(chunk)
+        else:
+            bot.send_message(message.chat.id, "Hm, I was unable to download the voice message.")
+            return
+
+        # Load the audio data with pydub
+        audio = AudioSegment.from_ogg('voice_message.ogg')
+
+        # Convert the audio to WAV format
+        audio = audio.set_frame_rate(16000)  # Set the frame rate to 16kHz
+        audio = audio.set_channels(1)  # Set the number of channels to 1 (mono)
+        audio = audio.set_sample_width(2)  # Set the sample width to 2 bytes (16 bits)
+        audio.export("output.wav", format="wav")
+
+        # Send the audio file to Whisper API
+        openai.api_key = openai_key
+        audio_file = open("output.wav", 'rb')
+
+        # Transcribe audio with error handling
+        try:
+            whisper_response = openai.Audio.transcribe("whisper-1", audio_file)
+            logging.info(f"Received transcription response: {whisper_response}")
+
+            # Extract the transcription from the response
+            transcription = whisper_response["text"]
+
+            # Send the transcription to the group
+            bot.send_message(message.chat.id, transcription)
+        except Exception as e:
+            logging.error(f"Error during transcription: {str(e)}")
+            bot.send_message(message.chat.id, f'Sorry, I was unable to transcribe the voice message. Error: {str(e)}')
     except Exception as e:
-        logging.error(f"Transcription failed: {str(e)}")
-        # If transcription fails, split the audio into chunks and transcribe each chunk
-        chunks = split_audio(audio, 23)
-        for chunk in chunks:
-            try:
-                text = transcribe_chunk(chunk)
-                bot.send_message(message.chat.id, text)
-            except Exception as e:
-                bot.send_message(message.chat.id, f'Sorry, I was unable to transcribe a part of the voice message. Error: {str(e)}')
+        # Log any other errors that occur during processing
+        logging.error(f"Error processing voice message: {str(e)}")
+        bot.send_message(message.chat.id, f'Sorry, an error occurred while processing your voice message: {str(e)}')
+
 
 
 # Set the webhook URL
